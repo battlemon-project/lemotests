@@ -59,7 +59,3 @@
     }
   ]
 }
-
-//nft_transfer receiver_id String, token_id String, approval_id u64 memo: Option<String>
-// get_owner_by_token_id token_id
-// nft_tokens
