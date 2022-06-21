@@ -81,7 +81,7 @@ where
 
         let (accounts, contracts) = self.process_accounts(&worker, &root).await?;
 
-        Ok(State::new(root, worker, accounts, contracts))
+        Ok(State::new(root, worker, accounts, contracts, Vec::new()))
     }
 
     async fn process_accounts(
@@ -126,12 +126,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{NFT, NFT_PATH};
+    use crate::{Near, NFT, NFT_PATH};
 
     #[test]
     fn builder_path_works() {
         StateBuilder::new(workspaces::testnet)
-            .with_contract(NFT, NFT_PATH, 10)
+            .with_contract(NFT, NFT_PATH, Near(10))
             .unwrap();
     }
 

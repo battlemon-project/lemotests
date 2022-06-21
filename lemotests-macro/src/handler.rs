@@ -28,11 +28,11 @@ fn compose_helpers(schema: &ContractSchema) -> TokenStream {
         compose_methods("alice", schema).into_iter().unzip();
 
     quote! {
-        pub trait Helper {
+        pub trait Helper<'a, T> {
            #(#declarations ;)*
         }
 
-        impl<T> Helper for lemotests::State<T>
+        impl<'a, T> Helper<'a, T> for lemotests::State<'a, T>
         where
             T: lemotests::workspaces::DevNetwork,
         {
@@ -61,7 +61,7 @@ fn compose_methods<'a>(
                 .collect();
 
             let declaration = quote! {
-               fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<lemotests::TxWrapper<'_>, lemotests::HelperError>
+               fn #trait_method_name(self, #(#flat_arguments),*) -> Result<lemotests::TxWrapper<'a, T>, lemotests::HelperError>
             };
 
             let args_without_types = arguments
@@ -69,7 +69,7 @@ fn compose_methods<'a>(
                 .map(|(arg, _)| quote!(#arg));
 
             let implementation = quote! {
-                fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<lemotests::TxWrapper<'_>, lemotests::HelperError> {
+                fn #trait_method_name(self, #(#flat_arguments),*) -> Result<lemotests::TxWrapper<'_>, lemotests::HelperError> {
                     let mut json_args = serde_json::Map::new();
 
                     #(json_args.insert(stringify!(#args_without_types).into(), #args_without_types.into());)*
@@ -78,7 +78,7 @@ fn compose_methods<'a>(
                     if account.is_none() && contract.is_none() {
                         return Err(lemotests::HelperError::AccountAndContractNotFound(format!("{}, {}", #account, #contract)));
                     };
-                    let tx = lemotests::TxWrapper::new(account, contract, #contract_function, json_args);
+                    let tx = lemotests::TxWrapper::new(account, contract, #contract_function, json_args, self);
 
                     Ok(tx)
                 }
