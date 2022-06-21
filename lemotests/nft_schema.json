@@ -1,4 +1,5 @@
 {
+  "name": "nft_token",
   "functions": [
     {
       "name": "init",
@@ -32,6 +33,33 @@
           "type": "String"
         }
       ]
+    },
+    {
+      "name": "nft_transfer",
+      "initable": false,
+      "kind": "call",
+      "args": [
+        {
+          "name": "receiver_id",
+          "type": "String"
+        },
+        {
+          "name": "token_id",
+          "type": "String"
+        },
+        {
+          "name": "approval_id",
+          "type": "u64"
+        },
+        {
+          "name": "memo",
+          "type": "String"
+        }
+      ]
     }
   ]
 }
+
+//nft_transfer receiver_id String, token_id String, approval_id u64 memo: Option<String>
+// get_owner_by_token_id token_id
+// nft_tokens
