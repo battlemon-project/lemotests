@@ -32,7 +32,7 @@ fn compose_helpers(schema: &ContractSchema) -> TokenStream {
                #(#declarations ;)*
          }
 
-        impl<T: test_helpers::workspaces::DevNetwork> Helper for test_helpers::State<T> {
+        impl<T: lemotests::workspaces::DevNetwork> Helper for lemotests::State<T> {
             #(#implementations)*
         }
     }
@@ -59,7 +59,7 @@ fn compose_methods<'a>(
                 .collect();
 
             let declaration = quote! {
-               fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<(), test_helpers::HelperError>
+               fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<(), lemotests::HelperError>
             };
 
             let args_without_types = arguments_without_generics
@@ -67,16 +67,16 @@ fn compose_methods<'a>(
                 .map(|(arg, _)| quote!(#arg));
 
             let implementation = quote! {
-                fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<(), test_helpers::HelperError> {
+                fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<(), lemotests::HelperError> {
                     let mut json_args = serde_json::Map::new();
 
                     #(json_args.insert(stringify!(#args_without_types).into(), #args_without_types.into());)*
                     let account = self.account(#account).ok();
                     let contract = self.contract(#contract).ok();
                     if account.is_none() && contract.is_none() {
-                        return Err(test_helpers::HelperError::AccountAndContractNotFound(format!("{}, {}", #account, #contract)));
+                        return Err(lemotests::HelperError::AccountAndContractNotFound(format!("{}, {}", #account, #contract)));
                     };
-                    let tx = test_helpers::TxWrapper::new(account, contract, #contract_function, json_args);
+                    let tx = lemotests::TxWrapper::new(account, contract, #contract_function, json_args);
                     // .call(self.worker(), #contract, #name);
 
                     Ok(())

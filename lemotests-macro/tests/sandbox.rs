@@ -1,13 +1,13 @@
-use lemotests::add_helpers;
-use test_helpers::{anyhow, tokio, Near, StateBuilder};
+use lemotests::{anyhow, tokio, Near, StateBuilder};
+use lemotests_macro::add_helpers;
 
 add_helpers!("./nft_schema.json");
 
 #[tokio::test]
 async fn test1() -> anyhow::Result<()> {
     let blockchain = StateBuilder::new(test_helpers::workspaces::testnet)
-    //     .with_alice(Near(20))?
-    //     .with_bob(Near(10))?
+        //     .with_alice(Near(20))?
+        //     .with_bob(Near(10))?
         .build()
         .await?;
     // let b = None;

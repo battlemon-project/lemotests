@@ -1,6 +1,4 @@
 #![feature(map_try_insert)]
-#![feature(associated_type_defaults)]
-#![feature(generic_associated_types)]
 
 mod consts;
 mod contract_initializer;

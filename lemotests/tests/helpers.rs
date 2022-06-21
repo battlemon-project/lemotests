@@ -1,4 +1,4 @@
-use test_helpers::{Callable, StateBuilder, NFT_PATH, TEN_NEAR};
+use lemotests::{Callable, StateBuilder, NFT_PATH, TEN_NEAR};
 
 #[tokio::test]
 async fn builder_works() -> Result<(), anyhow::Error> {
