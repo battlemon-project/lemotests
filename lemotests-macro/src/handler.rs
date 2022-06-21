@@ -28,11 +28,14 @@ fn compose_helpers(schema: &ContractSchema) -> TokenStream {
         compose_methods("alice", schema).into_iter().unzip();
 
     quote! {
-          pub trait Helper {
-               #(#declarations ;)*
-         }
+        pub trait Helper {
+           #(#declarations ;)*
+        }
 
-        impl<T: lemotests::workspaces::DevNetwork> Helper for lemotests::State<T> {
+        impl<T> Helper for lemotests::State<T>
+        where
+            T: lemotests::workspaces::DevNetwork,
+        {
             #(#implementations)*
         }
     }
@@ -51,23 +54,22 @@ fn compose_methods<'a>(
             let contract_function = &function_schema.name;
             let trait_method_name = format_ident!("{account}_{kind}_{contract}_{contract_function}");
 
-            let arguments_with_generics = compose_arguments(function_schema, true);
-            let arguments_without_generics = compose_arguments(function_schema, false);
-            let flat_arguments: Vec<_> = arguments_with_generics
+            let arguments = compose_arguments(function_schema);
+            let flat_arguments: Vec<_> = arguments
                 .iter()
                 .map(|(name, r#type)| quote! { #name: #r#type })
                 .collect();
 
             let declaration = quote! {
-               fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<(), lemotests::HelperError>
+               fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<lemotests::TxWrapper<'_>, lemotests::HelperError>
             };
 
-            let args_without_types = arguments_without_generics
+            let args_without_types = arguments
                 .iter()
                 .map(|(arg, _)| quote!(#arg));
 
             let implementation = quote! {
-                fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<(), lemotests::HelperError> {
+                fn #trait_method_name(&self, #(#flat_arguments),*) -> Result<lemotests::TxWrapper<'_>, lemotests::HelperError> {
                     let mut json_args = serde_json::Map::new();
 
                     #(json_args.insert(stringify!(#args_without_types).into(), #args_without_types.into());)*
@@ -77,9 +79,8 @@ fn compose_methods<'a>(
                         return Err(lemotests::HelperError::AccountAndContractNotFound(format!("{}, {}", #account, #contract)));
                     };
                     let tx = lemotests::TxWrapper::new(account, contract, #contract_function, json_args);
-                    // .call(self.worker(), #contract, #name);
 
-                    Ok(())
+                    Ok(tx)
                 }
             };
 
@@ -88,10 +89,7 @@ fn compose_methods<'a>(
         .collect()
 }
 
-fn compose_arguments(
-    function_schema: &FunctionSchema,
-    generic: bool,
-) -> Vec<(TokenStream, TokenStream)> {
+fn compose_arguments(function_schema: &FunctionSchema) -> Vec<(TokenStream, TokenStream)> {
     function_schema
         .arguments
         .iter()
@@ -100,8 +98,7 @@ fn compose_arguments(
             let r#type = &argument_schema.r#type;
             let name_ident = format_ident!("{name}");
             let argument_name = quote! { #name_ident };
-            let argument_type = if r#type == "String" && generic {
-                // quote! { impl AsRef<str> + serde::Serialize + serde::Deserialize}
+            let argument_type = if r#type == "String" {
                 quote! { &str }
             } else {
                 let type_ident = format_ident!("{type}");

@@ -5,7 +5,7 @@
       "name": "init",
       "initable": true,
       "kind": "call",
-      "args": [
+      "arguments": [
         {
           "name": "owner_id",
           "type": "String"
@@ -16,7 +16,7 @@
       "name": "mint",
       "initable": false,
       "kind": "call",
-      "args": [
+      "arguments": [
         {
           "name": "receiver_id",
           "type": "String"
@@ -27,7 +27,7 @@
       "name": "nft_token",
       "initable": false,
       "kind": "view",
-      "args": [
+      "arguments": [
         {
           "name": "token_id",
           "type": "String"
@@ -38,7 +38,7 @@
       "name": "nft_transfer",
       "initable": false,
       "kind": "call",
-      "args": [
+      "arguments": [
         {
           "name": "receiver_id",
           "type": "String"

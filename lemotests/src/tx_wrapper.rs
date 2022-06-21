@@ -1,25 +1,22 @@
 use crate::workspaces::{Account, Contract};
 use crate::{Gasable, Nearable};
-use near_sdk::serde::Serialize;
-pub struct TxWrapper<'a, T, V> {
+use serde_json::Value;
+
+pub struct TxWrapper<'a> {
     account: Option<&'a Account>,
     contract: Option<&'a Contract>,
-    arguments: T,
-    function: V,
+    function: &'a str,
+    arguments: serde_json::Map<String, Value>,
     near: Option<u128>,
     gas: Option<u64>,
 }
 
-impl<'a, T, V> TxWrapper<'a, T, V>
-where
-    T: Serialize,
-    V: AsRef<str>,
-{
+impl<'a> TxWrapper<'a> {
     pub fn new(
         account: Option<&'a Account>,
         contract: Option<&'a Contract>,
-        function: V,
-        arguments: T,
+        function: &'a str,
+        arguments: serde_json::Map<String, Value>,
     ) -> Self {
         Self {
             account,
