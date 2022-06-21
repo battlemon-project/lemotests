@@ -1,0 +1,37 @@
+{
+  "functions": [
+    {
+      "name": "init",
+      "initable": true,
+      "kind": "call",
+      "args": [
+        {
+          "name": "owner_id",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "mint",
+      "initable": false,
+      "kind": "call",
+      "args": [
+        {
+          "name": "receiver_id",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "nft_token",
+      "initable": false,
+      "kind": "view",
+      "args": [
+        {
+          "name": "token_id",
+          "type": "String"
+        }
+      ]
+    }
+  ]
+}
