@@ -11,5 +11,5 @@ use schema::*;
 
 #[proc_macro]
 pub fn add_helpers(item: TokenStream) -> TokenStream {
-    handle_input(item).unwrap().into()
+    handle_input_tt(item).unwrap().into()
 }

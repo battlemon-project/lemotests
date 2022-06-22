@@ -3,14 +3,31 @@ use anyhow::Context;
 use std::collections::BTreeMap;
 use std::future::Future;
 use std::path::PathBuf;
-use workspaces::network::DevAccountDeployer;
+use workspaces::network::{DevAccountDeployer, Testnet};
 use workspaces::types::Balance;
 use workspaces::{Account, DevNetwork, Worker};
+
+pub trait NearNetworks<F> {
+    fn testnet(worker_fut: fn() -> F) -> Self;
+}
 
 pub struct StateBuilder<F> {
     worker_fut: fn() -> F,
     accounts: BTreeMap<String, Balance>,
     contracts: BTreeMap<String, (PathBuf, Balance)>,
+}
+
+impl<F> NearNetworks<F> for StateBuilder<F>
+where
+    F: Future<Output = anyhow::Result<Worker<Testnet>>>,
+{
+    fn testnet(worker_fut: fn() -> F) -> Self {
+        Self {
+            worker_fut,
+            accounts: BTreeMap::new(),
+            contracts: BTreeMap::new(),
+        }
+    }
 }
 
 impl<F, T> StateBuilder<F>

@@ -1,4 +1,3 @@
-use crate::workspaces::{Account, Contract};
 use crate::{Gasable, HelperError, Nearable, State};
 use anyhow::Context;
 use near_sdk::serde::{Deserialize, Serialize};
@@ -109,10 +108,10 @@ async fn process_tx<T: DevNetwork>(
             .transact()
             .await
             .context("Failed to process transaction.")?,
-        (None, Some(contract)) => {
+        (None, Some(_contract)) => {
             todo!("view method")
         }
-        (Some(account), None) => {
+        (Some(_account), None) => {
             todo!("account call methods like transfer tokens or view state")
         }
         _ => unreachable!(),

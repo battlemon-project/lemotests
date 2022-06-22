@@ -49,11 +49,11 @@
         },
         {
           "name": "approval_id",
-          "type": "u64"
+          "type": "Option<u64>"
         },
         {
           "name": "memo",
-          "type": "String"
+          "type": "Option<String>"
         }
       ]
     }
