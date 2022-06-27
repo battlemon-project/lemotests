@@ -1,6 +1,6 @@
 #![feature(map_try_insert)]
 
-mod consts;
+pub mod consts;
 mod contract_initializer;
 mod errors;
 mod state;

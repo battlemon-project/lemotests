@@ -5,9 +5,11 @@ use std::fmt::{Debug, Formatter};
 #[derive(thiserror::Error)]
 pub enum MacrosError {
     #[error("Failed to open file with json scheme. {0}")]
-    FailedToOpenFile(#[from] std::io::Error),
+    FailedToOpenFileError(#[from] std::io::Error),
     #[error("Failed to deserialize json scheme. {0}")]
-    DeserializeJsonSchema(#[from] serde_json::Error),
+    DeserializeJsonSchemaError(#[from] serde_json::Error),
+    #[error("Failed to parse. {0}")]
+    FailedToParseError(#[from] syn::Error),
 }
 
 impl Debug for MacrosError {

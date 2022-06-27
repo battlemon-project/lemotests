@@ -1,3 +1,4 @@
+#![feature(let_else)]
 extern crate core;
 
 mod errors;

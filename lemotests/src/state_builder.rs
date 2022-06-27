@@ -7,26 +7,15 @@ use workspaces::network::{DevAccountDeployer, Testnet};
 use workspaces::types::Balance;
 use workspaces::{Account, DevNetwork, Worker};
 
-pub trait NearNetworks<F> {
-    fn testnet(worker_fut: fn() -> F) -> Self;
-}
-
 pub struct StateBuilder<F> {
     worker_fut: fn() -> F,
     accounts: BTreeMap<String, Balance>,
     contracts: BTreeMap<String, (PathBuf, Balance)>,
 }
 
-impl<F> NearNetworks<F> for StateBuilder<F>
-where
-    F: Future<Output = anyhow::Result<Worker<Testnet>>>,
-{
-    fn testnet(worker_fut: fn() -> F) -> Self {
-        Self {
-            worker_fut,
-            accounts: BTreeMap::new(),
-            contracts: BTreeMap::new(),
-        }
+impl StateBuilder<()> {
+    pub fn testnet() -> StateBuilder<impl Future<Output = anyhow::Result<Worker<Testnet>>>> {
+        StateBuilder::new(workspaces::testnet)
     }
 }
 
@@ -147,42 +136,42 @@ mod tests {
 
     #[test]
     fn builder_path_works() {
-        StateBuilder::new(workspaces::testnet)
+        StateBuilder::new(testnet)
             .with_contract(NFT, NFT_PATH, Near(10))
             .unwrap();
     }
 
     #[test]
     fn builder_path_buf_works() {
-        StateBuilder::new(workspaces::testnet)
+        StateBuilder::new(testnet)
             .with_contract(NFT, PathBuf::from(NFT_PATH), 10)
             .unwrap();
     }
 
     #[test]
     fn builder_ref_on_path_buf_works() {
-        StateBuilder::new(workspaces::testnet)
+        StateBuilder::new(testnet)
             .with_contract(NFT, &PathBuf::from(NFT_PATH), 10)
             .unwrap();
     }
 
     #[test]
     fn builder_account_str_works() {
-        StateBuilder::new(workspaces::testnet)
+        StateBuilder::new(testnet)
             .with_account("alice", 10)
             .unwrap();
     }
 
     #[test]
     fn builder_account_string_works() {
-        StateBuilder::new(workspaces::testnet)
+        StateBuilder::new(testnet)
             .with_account(String::from("alice"), 10)
             .unwrap();
     }
 
     #[test]
     fn builder_account_ref_on_string_works() {
-        StateBuilder::new(workspaces::testnet)
+        StateBuilder::new(testnet)
             .with_account(&String::from("alice"), 10)
             .unwrap();
     }
