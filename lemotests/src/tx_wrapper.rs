@@ -1,6 +1,6 @@
 use crate::{Gasable, HelperError, Nearable, State};
 use anyhow::Context;
-use near_sdk::serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::Debug;
 use workspaces::result::{CallExecutionDetails, ViewResultDetails};
