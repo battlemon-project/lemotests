@@ -3,7 +3,7 @@ use anyhow::Context;
 use std::collections::BTreeMap;
 use std::future::Future;
 use std::path::PathBuf;
-use workspaces::network::{DevAccountDeployer, Testnet};
+use workspaces::network::{DevAccountDeployer, Sandbox, Testnet};
 use workspaces::types::Balance;
 use workspaces::{Account, DevNetwork, Worker};
 
@@ -16,6 +16,10 @@ pub struct StateBuilder<F> {
 impl StateBuilder<()> {
     pub fn testnet() -> StateBuilder<impl Future<Output = anyhow::Result<Worker<Testnet>>>> {
         StateBuilder::new(workspaces::testnet)
+    }
+
+    pub fn sandbox() -> StateBuilder<impl Future<Output = anyhow::Result<Worker<Sandbox>>>> {
+        StateBuilder::new(workspaces::sandbox)
     }
 }
 

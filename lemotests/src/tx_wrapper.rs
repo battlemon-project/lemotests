@@ -3,8 +3,15 @@ use anyhow::Context;
 use near_sdk::serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::Debug;
-use workspaces::result::CallExecutionDetails;
+use workspaces::result::{CallExecutionDetails, ViewResultDetails};
 use workspaces::DevNetwork;
+
+#[derive(Debug, Copy, Clone)]
+pub enum TxKind {
+    AccountCallContract,
+    View,
+    SelfContractCall,
+}
 
 pub struct TxWrapper<T> {
     account: Option<String>,
@@ -13,6 +20,7 @@ pub struct TxWrapper<T> {
     arguments: serde_json::Map<String, Value>,
     near: Option<u128>,
     gas: Option<u64>,
+    tx_kind: TxKind,
     state: Option<State<T>>,
 }
 
@@ -22,6 +30,7 @@ impl<T: DevNetwork> TxWrapper<T> {
         contract: Option<String>,
         function: String,
         arguments: serde_json::Map<String, Value>,
+        tx_kind: TxKind,
         state: State<T>,
     ) -> Self {
         Self {
@@ -31,6 +40,7 @@ impl<T: DevNetwork> TxWrapper<T> {
             function,
             near: None,
             gas: None,
+            tx_kind,
             state: Some(state),
         }
     }
@@ -79,7 +89,7 @@ impl<T: DevNetwork> TxWrapper<T> {
         todo!()
     }
 
-    pub async fn execute(self) -> Vec<Result<CallExecutionDetails, HelperError>> {
+    pub async fn execute(self) -> Vec<Result<TxDetails, HelperError>> {
         let mut state = self.then();
         let mut buf = Vec::new();
         for tx in state.take_tx_scenarios().unwrap() {
@@ -91,31 +101,80 @@ impl<T: DevNetwork> TxWrapper<T> {
     }
 }
 
+pub enum TxDetails {
+    Call(Box<CallExecutionDetails>),
+    View(ViewResultDetails),
+}
+
 async fn process_tx<T: DevNetwork>(
     tx: TxWrapper<T>,
     state: &State<T>,
-) -> Result<CallExecutionDetails, HelperError> {
+) -> Result<TxDetails, HelperError> {
     let account = tx.account().and_then(|a| state.account(a).ok());
     let contract = tx.contract().and_then(|c| state.contract(c).ok());
 
-    let result = match (account, contract) {
-        (Some(account), Some(contract)) => account
-            .call(state.worker(), contract.id(), tx.function())
-            .deposit(tx.near())
-            .gas(tx.gas())
-            .args_json(tx.arguments())
-            .with_context(|| format!("Failed to parse JSON. Arguments {:?}", tx.arguments()))?
-            .transact()
-            .await
-            .context("Failed to process transaction.")?,
-        (None, Some(_contract)) => {
-            todo!("view method")
-        }
-        (Some(_account), None) => {
-            todo!("account call methods like transfer tokens or view state")
-        }
-        _ => unreachable!(),
-    };
+    match tx.tx_kind {
+        TxKind::AccountCallContract => {
+            let account = account.ok_or_else(|| {
+                HelperError::TransactionError(
+                    "the provided account hasn't found or doesn't exist in state.".to_owned(),
+                )
+            })?;
 
-    Ok(result)
+            let contract = contract.ok_or_else(|| {
+                HelperError::TransactionError(
+                    "the provided contract hasn't found or doesn't exist in state.".to_owned(),
+                )
+            })?;
+
+            let ret = account
+                .call(state.worker(), contract.id(), tx.function())
+                .deposit(tx.near())
+                .gas(tx.gas())
+                .args_json(tx.arguments())
+                .with_context(|| format!("Failed to parse JSON. Arguments {:?}", tx.arguments()))?
+                .transact()
+                .await
+                .context("Failed to process transaction.")?;
+
+            Ok(TxDetails::Call(Box::new(ret)))
+        }
+        TxKind::View => {
+            let contract = contract.ok_or_else(|| {
+                HelperError::TransactionError(
+                    "the provided contract hasn't found or doesn't exist in state.".to_owned(),
+                )
+            })?;
+
+            let ret = contract
+                .call(state.worker(), tx.function())
+                .gas(tx.gas())
+                .args_json(tx.arguments())
+                .with_context(|| format!("Failed to parse JSON. Arguments {:?}", tx.arguments()))?
+                .view()
+                .await
+                .context("Failed to process transaction.")?;
+
+            Ok(TxDetails::View(ret))
+        }
+        TxKind::SelfContractCall => {
+            let contract = contract.ok_or_else(|| {
+                HelperError::TransactionError(
+                    "the provided contract hasn't found or doesn't exist in state.".to_owned(),
+                )
+            })?;
+
+            let ret = contract
+                .call(state.worker(), tx.function())
+                .deposit(tx.near())
+                .gas(tx.gas())
+                .args_json(tx.arguments())
+                .with_context(|| format!("Failed to parse JSON. Arguments {:?}", tx.arguments()))?
+                .transact()
+                .await
+                .context("Failed to process transaction.")?;
+
+            Ok(TxDetails::Call(Box::new(ret)))
+        }
+    }
 }

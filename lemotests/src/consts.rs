@@ -14,6 +14,3 @@ pub const MARKET: &str = "market";
 
 pub const ACCOUNTS: [&str; 2] = ["alice", "bob"];
 
-pub const NFT_PATH: &str =
-    "../../battlemon_contracts/target/wasm32-unknown-unknown/release/nft_token.wasm";
-// pub const MARKET_PATH: &str = "../target/wasm32-unknown-unknown/release/nft_market.wasm";

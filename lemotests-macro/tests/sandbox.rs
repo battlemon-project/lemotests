@@ -1,5 +1,12 @@
-use lemotests::{anyhow, tokio, Near, StateBuilder, Tgas, MARKET, NFT_PATH};
+use lemotests::{anyhow, tokio, Near, StateBuilder, Tgas, TxDetails};
 use lemotests_macro::add_helpers;
+use serde_json::Value;
+
+const NFT_PATH: &str =
+    "../../battlemon_contracts/target/wasm32-unknown-unknown/release/nft_token.wasm";
+
+const MARKET_PATH: &str =
+    "../../battlemon_contracts/target/wasm32-unknown-unknown/release/nft_market.wasm";
 
 add_helpers!("./lemotests/nft_schema.json");
 
@@ -7,13 +14,13 @@ add_helpers!("./lemotests/nft_schema.json");
 async fn base_features_works() -> anyhow::Result<()> {
     let blockchain = StateBuilder::testnet()
         .with_contract("nft_token", NFT_PATH, Near(10))?
-        .with_contract("market", MARKET, Near(20))?
+        .with_contract("market", MARKET_PATH, Near(20))?
         .with_alice(Near(20))?
         .with_bob(Near(10))?
         .build()
         .await?;
 
-    let mut result = blockchain
+    let result = blockchain
         .alice_call_nft_token_init("alice")?
         .with_gas(Tgas(10))
         .then()
@@ -29,11 +36,16 @@ async fn base_features_works() -> anyhow::Result<()> {
         .with_deposit(Near(1))
         .with_gas(Tgas(5))
         .then()
-        .bob_view_nft_token_nft_token("1")
+        .view_nft_token_nft_token("1")?
         .with_gas(Tgas(5))
         .execute()
-        .await?;
-    dbg!(result);
+        .await;
 
+    match result.last() {
+        Some(Ok(TxDetails::View(details))) => {
+            dbg!(details.json::<Value>().unwrap());
+        }
+        _ => todo!(),
+    }
     Ok(())
 }

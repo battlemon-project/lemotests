@@ -9,6 +9,8 @@ pub enum HelperError {
     BuilderError(String),
     #[error("Failed to get account with id {0}")]
     AccountNotFound(String),
+    #[error("Failed to process transactions: {0}")]
+    TransactionError(String),
     #[error("Failed to get contract with id {0}")]
     ContractNotFound(String),
     #[error("Failed to get contract and account with id {0}")]

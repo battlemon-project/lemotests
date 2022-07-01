@@ -1,4 +1,5 @@
 use crate::MacrosError;
+use lemotests::TxKind;
 use proc_macro2::TokenStream;
 use quote::quote;
 use serde::Deserialize;
@@ -28,40 +29,47 @@ pub(crate) struct ContractSchema {
 }
 
 impl ContractSchema {
-    pub(crate) fn functions(&self) -> Vec<FunctionMetadata> {
+    pub(crate) fn blueprints(&self, accounts: &[&str]) -> Vec<FunctionBlueprint> {
         self.functions
             .iter()
-            .map(|f| {
-                let mut metadata = f.metadata();
-                metadata.update_trait_method_name(|old_method_name| {
-                    format!("{}_{}_{}", f.kind, self.name, old_method_name)
-                });
-                metadata
-            })
+            .flat_map(|f| f.blueprints(self.name.clone(), accounts))
             .collect()
     }
 }
 
-pub(crate) struct FunctionMetadata {
+pub(crate) struct FunctionBlueprint {
     pub(crate) contract_function_name: String,
     pub(crate) trait_method_name: String,
     pub(crate) args: Vec<FnArg>,
+    pub(crate) account: Option<String>,
+    pub(crate) tx_kind: TxKind,
+    pub(crate) contract_name: String,
 }
 
-impl FunctionMetadata {
-    pub(crate) fn new(contract_function_name: String, args: Vec<FnArg>) -> Self {
+impl FunctionBlueprint {
+    pub(crate) fn new(
+        contract_function_name: String,
+        trait_method_name: String,
+        args: Vec<FnArg>,
+        account: Option<String>,
+        tx_kind: TxKind,
+        contract_name: String,
+    ) -> Self {
         Self {
             contract_function_name: contract_function_name.clone(),
-            trait_method_name: contract_function_name,
+            trait_method_name,
             args,
+            account,
+            tx_kind,
+            contract_name,
         }
     }
 
-    pub(crate) fn update_trait_method_name(&mut self, updater: impl Fn(&str) -> String) {
-        self.trait_method_name = updater(&self.trait_method_name);
+    pub fn tx_kind(&self) -> &TxKind {
+        &self.tx_kind
     }
 
-    pub(crate) fn args_without_types(&self) -> Vec<&PatIdent> {
+    pub fn args_without_types(&self) -> Vec<&PatIdent> {
         self.args
             .iter()
             .map(|arg| {
@@ -72,33 +80,76 @@ impl FunctionMetadata {
             .collect()
     }
 
-    pub(crate) fn concat_with_accounts<'a, 'b: 'a>(
-        &'a self,
-        accounts: &'b [&'b str],
-    ) -> Vec<(usize, String)> {
-        accounts
-            .iter()
-            .enumerate()
-            .map(|(idx, account)| (idx, format!("{}_{}", account, self.trait_method_name)))
-            .collect()
-    }
-
-    pub(crate) fn args_tt(&self) -> TokenStream {
+    pub fn args_tt(&self) -> TokenStream {
         let args = self.args.clone();
         quote!(#(#args),*)
     }
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FunctionKind {
+    Call,
+    View,
+}
+
+#[derive(Deserialize)]
 pub(crate) struct FunctionSchema {
     pub(crate) name: String,
-    pub(crate) kind: String,
+    kind: FunctionKind,
     pub(crate) arguments: Vec<ArgumentSchema>,
 }
 
 impl FunctionSchema {
-    pub(crate) fn metadata(&self) -> FunctionMetadata {
-        FunctionMetadata::new(self.name.to_string(), self.arguments())
+    pub fn kind(&self) -> &FunctionKind {
+        &self.kind
+    }
+
+    pub(crate) fn blueprints(
+        &self,
+        contract_name: String,
+        accounts: &[&str],
+    ) -> Vec<FunctionBlueprint> {
+        let arguments = self.arguments();
+        let mut ret = Vec::new();
+        let contract_function_name = &self.name;
+        match self.kind {
+            FunctionKind::Call => {
+                let self_contract_call = FunctionBlueprint::new(
+                    contract_function_name.clone(),
+                    format!("call_{contract_name}_{contract_function_name}"),
+                    arguments.clone(),
+                    None,
+                    TxKind::SelfContractCall,
+                    contract_name.clone(),
+                );
+                ret.push(self_contract_call);
+
+                for account in accounts {
+                    let blueprint = FunctionBlueprint::new(
+                        contract_function_name.clone(),
+                        format!("{account}_call_{contract_name}_{contract_function_name}"),
+                        arguments.clone(),
+                        Some(account.to_string()),
+                        TxKind::AccountCallContract,
+                        contract_name.clone(),
+                    );
+                    ret.push(blueprint);
+                }
+                ret
+            }
+            FunctionKind::View => {
+                let blueprint = FunctionBlueprint::new(
+                    contract_function_name.clone(),
+                    format!("view_{contract_name}_{contract_function_name}"),
+                    arguments,
+                    None,
+                    TxKind::View,
+                    contract_name,
+                );
+                vec![blueprint]
+            }
+        }
     }
 
     fn arguments(&self) -> Vec<FnArg> {
@@ -120,10 +171,4 @@ impl ArgumentSchema {
         let r#type = self.r#type.replacen("String", "&str", 1);
         format!("{}: {}", self.name, r#type)
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
 }
