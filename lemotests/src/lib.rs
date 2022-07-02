@@ -7,6 +7,7 @@ mod state;
 mod state_builder;
 mod tx_wrapper;
 mod units;
+mod tx_details;
 
 pub use anyhow;
 pub use consts::*;
@@ -18,3 +19,4 @@ pub use tokio;
 pub use tx_wrapper::*;
 pub use units::*;
 pub use workspaces;
+pub use tx_details::*;

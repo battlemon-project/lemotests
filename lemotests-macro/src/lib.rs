@@ -4,6 +4,7 @@ extern crate core;
 mod errors;
 mod handler;
 mod schema;
+mod blueprint;
 
 use errors::*;
 use handler::*;

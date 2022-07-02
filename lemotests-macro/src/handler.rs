@@ -1,9 +1,10 @@
-use crate::{ContractSchema, FunctionBlueprint, MacrosError};
+use crate::{ContractSchema, MacrosError};
 use lemotests::consts::ACCOUNTS;
 use lemotests::TxKind;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, ToTokens};
 use syn::{ExprLit, Lit};
+use crate::blueprint::FunctionBlueprint;
 
 pub(crate) fn handle_input_tt(input: proc_macro::TokenStream) -> Result<TokenStream, MacrosError> {
     let tokens = match syn::parse::<ExprLit>(input) {

@@ -1,4 +1,4 @@
-use lemotests::{anyhow, tokio, Near, StateBuilder, Tgas, TxDetails};
+use lemotests::{anyhow, Near, StateBuilder, Tgas, tokio};
 use lemotests_macro::add_helpers;
 use serde_json::Value;
 
@@ -39,13 +39,7 @@ async fn base_features_works() -> anyhow::Result<()> {
         .view_nft_token_nft_token("1")?
         .with_gas(Tgas(5))
         .execute()
-        .await;
+        .await?;
 
-    match result.last() {
-        Some(Ok(TxDetails::View(details))) => {
-            dbg!(details.json::<Value>().unwrap());
-        }
-        _ => todo!(),
-    }
     Ok(())
 }

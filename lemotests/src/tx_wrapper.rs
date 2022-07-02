@@ -1,9 +1,9 @@
+use crate::tx_details::TxDetails;
 use crate::{Gasable, HelperError, Nearable, State};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::Debug;
-use workspaces::result::{CallExecutionDetails, ViewResultDetails};
 use workspaces::DevNetwork;
 
 #[derive(Debug, Copy, Clone)]
@@ -89,21 +89,16 @@ impl<T: DevNetwork> TxWrapper<T> {
         todo!()
     }
 
-    pub async fn execute(self) -> Vec<Result<TxDetails, HelperError>> {
+    pub async fn execute(self) -> Result<Vec<TxDetails>, HelperError> {
         let mut state = self.then();
         let mut buf = Vec::new();
         for tx in state.take_tx_scenarios().unwrap() {
-            let tx_result = process_tx(tx, &state).await;
+            let tx_result = process_tx(tx, &state).await?;
             buf.push(tx_result);
         }
 
-        buf
+        Ok(buf)
     }
-}
-
-pub enum TxDetails {
-    Call(Box<CallExecutionDetails>),
-    View(ViewResultDetails),
 }
 
 async fn process_tx<T: DevNetwork>(

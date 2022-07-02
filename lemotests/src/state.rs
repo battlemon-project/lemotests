@@ -1,6 +1,6 @@
 use crate::{HelperError, TxWrapper};
 use std::collections::BTreeMap;
-use workspaces::{Account, Contract, DevNetwork, Worker};
+use workspaces::{Account, AccountId, Contract, DevNetwork, Worker};
 pub type Accounts = BTreeMap<String, Account>;
 pub type Contracts = BTreeMap<String, Contract>;
 
@@ -62,6 +62,11 @@ where
             .ok_or_else(|| HelperError::ContractNotFound(id.as_ref().to_owned()))
     }
 
+    pub fn contract_id(&self, id: impl AsRef<str>) -> Result<String, HelperError> {
+        self.contract(id)
+            .map(|contract| contract.id().as_str().to_owned())
+    }
+
     pub fn contract_key(&self, id: impl AsRef<str>) -> Option<&String> {
         self.contracts.get_key_value(id.as_ref()).map(|(k, _)| k)
     }
@@ -70,8 +75,30 @@ where
         self.accounts.get_key_value(id.as_ref()).map(|(k, _)| k)
     }
 
+    pub fn string_ids<const N: usize>(&self) -> Result<[String; N], HelperError> {
+        self.contracts
+            .values()
+            .map(|contract| contract.id().as_str().to_owned())
+            .chain(
+                self.accounts
+                    .values()
+                    .map(|account| account.id().as_str().to_owned()),
+            )
+            .collect::<Vec<_>>()
+            .try_into()
+            .map_err(|_| {
+                HelperError::DestructuringError(
+                    "The provided amount of accounts isn't valid for the current state".to_owned(),
+                )
+            })
+    }
+
     pub fn alice(&self) -> Result<&Account, HelperError> {
         self.account("alice")
+    }
+
+    pub fn alice_id(&self) -> Result<String, HelperError> {
+        self.alice().map(|account| account.id().as_str().to_owned())
     }
 
     pub fn bob(&self) -> Result<&Account, HelperError> {

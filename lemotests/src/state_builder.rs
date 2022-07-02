@@ -1,4 +1,4 @@
-use crate::{HelperError, Nearable, State};
+use crate::{HelperError, Nearable, State, ALICE, BOB, CHARLIE, DAVE, EDWARD, FRED};
 use anyhow::Context;
 use std::collections::BTreeMap;
 use std::future::Future;
@@ -74,11 +74,27 @@ where
     }
 
     pub fn with_alice(self, balance: impl Nearable) -> Result<Self, HelperError> {
-        self.with_account("alice", balance)
+        self.with_account(ALICE, balance)
     }
 
     pub fn with_bob(self, balance: impl Nearable) -> Result<Self, HelperError> {
-        self.with_account("bob", balance)
+        self.with_account(BOB, balance)
+    }
+
+    pub fn with_charlie(self, balance: impl Nearable) -> Result<Self, HelperError> {
+        self.with_account(CHARLIE, balance)
+    }
+
+    pub fn with_dave(self, balance: impl Nearable) -> Result<Self, HelperError> {
+        self.with_account(DAVE, balance)
+    }
+
+    pub fn with_edward(self, balance: impl Nearable) -> Result<Self, HelperError> {
+        self.with_account(EDWARD, balance)
+    }
+
+    pub fn with_fred(self, balance: impl Nearable) -> Result<Self, HelperError> {
+        self.with_account(FRED, balance)
     }
 
     pub async fn build(self) -> Result<State<T>, HelperError> {
