@@ -15,6 +15,8 @@ pub enum HelperError {
     ContractNotFound(String),
     #[error("Failed to get contract and account with id {0}")]
     AccountAndContractNotFound(String),
+    #[error("Failed to destructure array into variables: {0}")]
+    DestructuringError(String),
 }
 
 impl Debug for HelperError {
