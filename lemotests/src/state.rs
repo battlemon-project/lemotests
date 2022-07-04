@@ -1,8 +1,7 @@
 use crate::{HelperError, TxWrapper};
-use std::collections::BTreeMap;
 use workspaces::{Account, AccountId, Contract, DevNetwork, Worker};
-pub type Accounts = BTreeMap<String, Account>;
-pub type Contracts = BTreeMap<String, Contract>;
+pub type Accounts = indexmap::IndexMap<String, Account>;
+pub type Contracts = indexmap::IndexMap<String, Contract>;
 
 pub struct State<T> {
     root: Account,

@@ -1,6 +1,6 @@
 use crate::{HelperError, Nearable, State, ALICE, BOB, CHARLIE, DAVE, EDWARD, FRED};
 use anyhow::Context;
-use std::collections::BTreeMap;
+use indexmap::IndexMap;
 use std::future::Future;
 use std::path::PathBuf;
 use workspaces::network::{DevAccountDeployer, Sandbox, Testnet};
@@ -9,8 +9,8 @@ use workspaces::{Account, DevNetwork, Worker};
 
 pub struct StateBuilder<F> {
     worker_fut: fn() -> F,
-    accounts: BTreeMap<String, Balance>,
-    contracts: BTreeMap<String, (PathBuf, Balance)>,
+    accounts: IndexMap<String, Balance>,
+    contracts: IndexMap<String, (PathBuf, Balance)>,
 }
 
 impl StateBuilder<()> {
@@ -31,46 +31,43 @@ where
     pub fn new(worker_fut: fn() -> F) -> Self {
         Self {
             worker_fut,
-            accounts: BTreeMap::new(),
-            contracts: BTreeMap::new(),
+            accounts: IndexMap::new(),
+            contracts: IndexMap::new(),
         }
     }
 
     pub fn with_contract(
         mut self,
-        id: &str,
+        id: impl AsRef<str>,
         path: impl AsRef<std::path::Path>,
         balance: impl Nearable,
     ) -> Result<Self, HelperError> {
         self.contracts
-            .try_insert(
-                id.to_owned(),
+            .insert(
+                id.as_ref().to_owned(),
                 (path.as_ref().to_path_buf(), balance.parse()),
             )
-            .map_err(|e| {
-                HelperError::BuilderError(format!(
-                    "Couldn't add task for contract creating with id `{}`",
-                    e.entry.key()
-                ))
-            })?;
-
-        Ok(self)
+            .map_or(Ok(self), |_| {
+                Err(HelperError::BuilderError(format!(
+                    "Couldn't add task for contract with id `{}` because it already exists",
+                    id.as_ref().to_owned()
+                )))
+            })
     }
 
-    pub fn with_account<S: AsRef<str>>(
+    pub fn with_account(
         mut self,
-        id: S,
+        id: impl AsRef<str>,
         balance: impl Nearable,
     ) -> Result<Self, HelperError> {
         self.accounts
-            .try_insert(id.as_ref().to_owned(), balance.parse())
-            .map_err(|e| {
-                HelperError::BuilderError(format!(
-                    "Couldn't add task for account creating with id `{}`",
-                    e.entry.key()
-                ))
-            })?;
-        Ok(self)
+            .insert(id.as_ref().to_owned(), balance.parse())
+            .map_or(Ok(self), |_| {
+                Err(HelperError::BuilderError(format!(
+                    "Couldn't add task for account with id `{}` because it already exists",
+                    id.as_ref().to_owned()
+                )))
+            })
     }
 
     pub fn with_alice(self, balance: impl Nearable) -> Result<Self, HelperError> {
@@ -115,8 +112,8 @@ where
         worker: &Worker<T>,
         root: &Account,
     ) -> Result<(crate::Accounts, crate::Contracts), HelperError> {
-        let mut accounts_buf = BTreeMap::new();
-        let mut contracts_buf = BTreeMap::new();
+        let mut accounts_buf = IndexMap::new();
+        let mut contracts_buf = IndexMap::new();
 
         let accounts = self
             .accounts
