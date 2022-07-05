@@ -1,7 +1,98 @@
-The thin wrapper around Near's `workspaces-rs` crate. It provides a simple way to create the "state" of blockchain for
-testing purposes.
+The thin wrapper around Near's `workspaces-rs` crate.
+It provides a simple way to create the "state" of blockchain and simple helpers to interact with it for testing
+purposes.
 
-For comparison:
+`lemotests-macro` is a crate with macros `add_helpers`, which generates helper methods for testing.
+It parses contract schema and generates methods for famous aliases like Alice, Bob, Charlie, etc.
+
+`schema example`
+
+```json
+{
+  "name": "nft_contract",
+  "functions": [
+    {
+      "name": "init",
+      "initable": true,
+      "kind": "call",
+      "arguments": [
+        {
+          "name": "owner_id",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "nft_mint",
+      "initable": false,
+      "kind": "call",
+      "arguments": [
+        {
+          "name": "receiver_id",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "nft_token",
+      "initable": false,
+      "kind": "view",
+      "arguments": [
+        {
+          "name": "token_id",
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "nft_transfer",
+      "initable": false,
+      "kind": "call",
+      "arguments": [
+        {
+          "name": "receiver_id",
+          "type": "String"
+        },
+        {
+          "name": "token_id",
+          "type": "String"
+        },
+        {
+          "name": "approval_id",
+          "type": "Option<u64>"
+        },
+        {
+          "name": "memo",
+          "type": "Option<String>"
+        }
+      ]
+    },
+    {
+      "name": "nft_approve",
+      "initable": false,
+      "kind": "call",
+      "arguments": [
+        {
+          "name": "token_id",
+          "type": "String"
+        },
+        {
+          "name": "account_id",
+          "type": "String"
+        },
+        {
+          "name": "msg",
+          "type": "Option<String>"
+        }
+      ]
+    }
+  ]
+}
+```
+
+This schema has been written by hand, but it will be generated automatically in the future.
+
+Let's compare the same test between `workspaces-rs` and `lemotests`:
 
 `workspaces-rs`
 
