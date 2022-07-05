@@ -1,44 +1,56 @@
+use crate::HelperError;
 use std::fmt::Debug;
 use workspaces::result::{CallExecutionDetails, ExecutionOutcome, ViewResultDetails};
+use workspaces::AccountDetails;
 
 pub enum TxDetails {
     Call(Box<CallExecutionDetails>),
     View(ViewResultDetails),
+    ViewAccount(AccountDetails),
 }
 
 impl TxDetails {
+    pub fn balance(&self) -> u128 {
+        match self {
+            TxDetails::Call(details) => unimplemented!("balance method not available for `Call`"),
+            TxDetails::View(details) => unimplemented!("balance method not available for `View`"),
+            TxDetails::ViewAccount(details) => details.balance,
+        }
+    }
+
     pub fn json<T: serde::de::DeserializeOwned>(&self) -> anyhow::Result<T> {
         match self {
             TxDetails::Call(details) => details.json(),
             TxDetails::View(details) => details.json(),
+            TxDetails::ViewAccount(details) => unimplemented!("json not available for ViewAccount"),
         }
     }
 
     pub fn logs(&self) -> Vec<&str> {
         match self {
             TxDetails::Call(details) => details.logs(),
-            _ => panic!("logs not available for view results"),
+            _ => unimplemented!("logs not available for view results"),
         }
     }
 
     pub fn outcome(&self) -> &ExecutionOutcome {
         match self {
             TxDetails::Call(details) => details.outcome(),
-            _ => panic!("View result has no outcome"),
+            _ => unimplemented!("View result has no outcome"),
         }
     }
 
     pub fn outcomes(&self) -> Vec<&ExecutionOutcome> {
         match self {
             TxDetails::Call(details) => details.outcomes(),
-            _ => panic!("View result has no outcomes"),
+            _ => unimplemented!("View result has no outcomes"),
         }
     }
 
     pub fn is_success(&self) -> bool {
         match self {
             TxDetails::Call(details) => details.is_success(),
-            _ => panic!("View result has no `is_success`"),
+            _ => unimplemented!("View result has no `is_success`"),
         }
     }
 }
@@ -52,6 +64,7 @@ impl Debug for TxDetails {
                 "TxDetails::View(ViewResultDetails {{logs {:?}, result: {:?} }})",
                 details.logs, details.result
             ),
+            TxDetails::ViewAccount(details) => write!(f, "{:?}", details),
         }
     }
 }

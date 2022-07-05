@@ -7,18 +7,31 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 use syn::FnArg;
 
-pub(crate) fn read_json_schema_from_file<P>(path: P) -> Result<BufReader<File>, MacrosError>
+pub(crate) fn read_json_schemas_from_file<P>(
+    paths: &[P],
+) -> Result<Vec<BufReader<File>>, MacrosError>
 where
     P: AsRef<Path>,
 {
-    let file = File::open(path)?;
-    Ok(BufReader::new(file))
+    let mut ret = Vec::new();
+    for path in paths {
+        let file = File::open(path)?;
+        ret.push(BufReader::new(file))
+    }
+
+    Ok(ret)
 }
 
-pub(crate) fn deserialize_json_schema<R: Read>(
-    reader: &mut BufReader<R>,
-) -> Result<ContractSchema, MacrosError> {
-    serde_json::from_reader(reader).map_err(MacrosError::DeserializeJsonSchemaError)
+pub(crate) fn deserialize_json_schemas<R: Read>(
+    readers: &mut [BufReader<R>],
+) -> Result<Vec<ContractSchema>, MacrosError> {
+    let mut ret = Vec::new();
+    for reader in readers {
+        let schema =
+            serde_json::from_reader(reader).map_err(MacrosError::DeserializeJsonSchemaError)?;
+        ret.push(schema)
+    }
+    Ok(ret)
 }
 
 #[derive(Deserialize)]

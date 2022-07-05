@@ -1,6 +1,9 @@
+use crate::chain_result::ChainResult;
 use crate::tx_details::TxDetails;
+use crate::Key;
 use crate::{Gasable, HelperError, Nearable, State};
 use anyhow::Context;
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt::Debug;
@@ -11,6 +14,7 @@ pub enum TxKind {
     AccountCallContract,
     View,
     SelfContractCall,
+    ViewAccount,
 }
 
 pub struct TxWrapper<T> {
@@ -22,6 +26,7 @@ pub struct TxWrapper<T> {
     gas: Option<u64>,
     tx_kind: TxKind,
     state: Option<State<T>>,
+    label: Option<Key>,
 }
 
 impl<T: DevNetwork> TxWrapper<T> {
@@ -42,6 +47,7 @@ impl<T: DevNetwork> TxWrapper<T> {
             gas: None,
             tx_kind,
             state: Some(state),
+            label: None,
         }
     }
 
@@ -85,30 +91,52 @@ impl<T: DevNetwork> TxWrapper<T> {
         state
     }
 
+    pub(crate) fn label(&self) -> Option<Key> {
+        self.label.clone()
+    }
+
+    pub fn with_label(mut self, label: impl AsRef<str>) -> Self {
+        self.label = Some(Key::Label(label.as_ref().to_owned()));
+        self
+    }
+
     pub fn and() -> Self {
         todo!()
     }
 
-    pub async fn execute(self) -> Result<Vec<TxDetails>, HelperError> {
+    pub async fn execute(self) -> Result<ChainResult<T>, HelperError> {
         let mut state = self.then();
-        let mut buf = Vec::new();
-        for tx in state.take_tx_scenarios().unwrap() {
-            let tx_result = process_tx(tx, &state).await?;
-            buf.push(tx_result);
-        }
+        let mut ret = ChainResult::new();
 
-        Ok(buf)
+        for (idx, tx) in state.take_tx_scenarios().iter().enumerate() {
+            let label = tx.label().unwrap_or(Key::Index(idx));
+            let tx_details = process_tx(tx, &state).await?;
+            ret.add_tx_details(label, tx_details);
+        }
+        ret.add_state(state);
+        Ok(ret)
     }
 }
 
 async fn process_tx<T: DevNetwork>(
-    tx: TxWrapper<T>,
+    tx: &TxWrapper<T>,
     state: &State<T>,
 ) -> Result<TxDetails, HelperError> {
     let account = tx.account().and_then(|a| state.account(a).ok());
     let contract = tx.contract().and_then(|c| state.contract(c).ok());
 
     match tx.tx_kind {
+        TxKind::ViewAccount => {
+            let account = account.ok_or_else(|| {
+                HelperError::TransactionError(
+                    "the provided account hasn't found or doesn't exist in state.".to_owned(),
+                )
+            })?;
+
+            let ret = account.view_account(state.worker()).await?;
+            Ok(TxDetails::ViewAccount(ret))
+        }
+
         TxKind::AccountCallContract => {
             let account = account.ok_or_else(|| {
                 HelperError::TransactionError(

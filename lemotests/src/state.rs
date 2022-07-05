@@ -1,4 +1,6 @@
-use crate::{HelperError, TxWrapper};
+use crate::{HelperError, TxDetails, TxKind, TxWrapper};
+use core::fmt;
+use std::fmt::Formatter;
 use workspaces::{Account, AccountId, Contract, DevNetwork, Worker};
 pub type Accounts = indexmap::IndexMap<String, Account>;
 pub type Contracts = indexmap::IndexMap<String, Contract>;
@@ -37,8 +39,8 @@ where
         }
     }
 
-    pub fn take_tx_scenarios(&mut self) -> Option<Vec<TxWrapper<T>>> {
-        self.tx_scenarios.take()
+    pub fn take_tx_scenarios(&mut self) -> Vec<TxWrapper<T>> {
+        self.tx_scenarios.take().unwrap_or_else(Vec::new)
     }
 
     pub fn worker(&self) -> &Worker<T> {
@@ -72,6 +74,19 @@ where
 
     pub fn account_key(&self, id: impl AsRef<str>) -> Option<&String> {
         self.accounts.get_key_value(id.as_ref()).map(|(k, _)| k)
+    }
+
+    pub fn view_account(self, id: impl AsRef<str>) -> Result<TxWrapper<T>, HelperError> {
+        let ret = TxWrapper::new(
+            Some(id.as_ref().to_owned()),
+            None,
+            "view_balance".to_owned(),
+            serde_json::Map::new(),
+            TxKind::ViewAccount,
+            self,
+        );
+
+        Ok(ret)
     }
 
     pub fn string_ids<const N: usize>(&self) -> Result<[String; N], HelperError> {

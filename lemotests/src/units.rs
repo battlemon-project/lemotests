@@ -1,4 +1,15 @@
+use std::fmt;
+use std::ops::Sub;
+
 pub struct Near(pub u128);
+
+impl Sub<u128> for Near {
+    type Output = u128;
+
+    fn sub(self, other: u128) -> Self::Output {
+        self.parse() - other
+    }
+}
 
 pub struct Tgas(pub u64);
 
@@ -31,5 +42,17 @@ impl Gasable for Tgas {
 impl Gasable for u64 {
     fn parse(&self) -> u64 {
         *self
+    }
+}
+
+impl fmt::Display for Near {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl fmt::Display for Tgas {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

@@ -6,8 +6,6 @@
 // pub const TEN_NEAR: Balance = parse_near!("10 N");
 // pub const FIFTEEN_NEAR: Balance = parse_near!("15 N");
 // pub const SIXTEEN_NEAR: Balance = parse_near!("16 N");
-pub const NFT: &str = "nft";
-pub const MARKET: &str = "market";
 pub const ALICE: &str = "alice";
 pub const BOB: &str = "bob";
 pub const CHARLIE: &str = "charlie";

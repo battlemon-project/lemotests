@@ -1,24 +1,27 @@
+use crate::blueprint::FunctionBlueprint;
 use crate::{ContractSchema, MacrosError};
 use lemotests::consts::ACCOUNTS;
 use lemotests::TxKind;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, ToTokens};
-use syn::{ExprLit, Lit};
-use crate::blueprint::FunctionBlueprint;
+use std::path::Path;
+use syn::parse::Parser;
+use syn::punctuated::Punctuated;
+use syn::{ExprLit, Lit, Token};
 
 pub(crate) fn handle_input_tt(input: proc_macro::TokenStream) -> Result<TokenStream, MacrosError> {
-    let tokens = match syn::parse::<ExprLit>(input) {
-        Ok(ExprLit {
-            lit: Lit::Str(path),
-            ..
-        }) => {
-            let mut reader = crate::read_json_schema_from_file(path.value())?;
-            let schema = crate::deserialize_json_schema(&mut reader)?;
-            compose_helper_trait_tt(&schema)
+    let parser = Punctuated::<ExprLit, Token![,]>::parse_terminated;
+    let parsed = parser.parse(input);
+    let tokens = match parsed {
+        Ok(punctuated) => {
+            let paths = get_paths(punctuated)?;
+            let mut readers = crate::read_json_schemas_from_file(&paths)?;
+            let schemas = crate::deserialize_json_schemas(&mut readers)?;
+            compose_helper_trait_tt(&schemas)
         }
         _ => syn::Error::new(
             Span::call_site(),
-            "parse can only be used with string literals",
+            "parse can only be used with list of literal paths",
         )
         .to_compile_error(),
     };
@@ -26,19 +29,49 @@ pub(crate) fn handle_input_tt(input: proc_macro::TokenStream) -> Result<TokenStr
     Ok(tokens)
 }
 
-fn compose_helper_trait_tt(schema: &ContractSchema) -> TokenStream {
-    let (declarations_tt, implementations_tt) = compose_methods_for_accounts_tt(schema, &ACCOUNTS);
+fn get_paths<P>(punctuated: Punctuated<ExprLit, P>) -> Result<Vec<String>, MacrosError> {
+    let mut ret = Vec::new();
+    for expr_lit in punctuated.iter() {
+        match expr_lit {
+            ExprLit {
+                lit: Lit::Str(lit), ..
+            } => {
+                let path = lit.value();
+                ret.push(path);
+            }
+            _ => {
+                return Err(MacrosError::DestructuringPunctuatedError(
+                    "Must contain only `ExprLit` types".to_string(),
+                ))
+            }
+        }
+    }
+
+    Ok(ret)
+}
+
+fn compose_helper_trait_tt(schemas: &[ContractSchema]) -> TokenStream {
+    let mut all_declarations_tt = TokenStream::new();
+    let mut all_implementations_tt = TokenStream::new();
+
+    for schema in schemas {
+        let (declarations_tt, implementations_tt) =
+            compose_methods_for_accounts_tt(schema, &ACCOUNTS);
+        declarations_tt.to_tokens(&mut all_declarations_tt);
+        implementations_tt.to_tokens(&mut all_implementations_tt);
+    }
+
     quote! {
         pub trait Helper<T>
         {
-           #declarations_tt
+           #all_declarations_tt
         }
 
         impl<T> Helper<T> for lemotests::State<T>
         where
             T: lemotests::workspaces::DevNetwork,
         {
-            #implementations_tt
+            #all_implementations_tt
         }
     }
 }
@@ -88,9 +121,9 @@ fn compose_method_for_accounts_tt(blueprint: FunctionBlueprint) -> (TokenStream,
                         return Err(lemotests::HelperError::AccountAndContractNotFound(format!("{}, {}", #account, #contract_name)));
                     };
 
-                    let mut json_args = serde_json::Map::new();
+                    let mut json_args = lemotests::serde_json::Map::new();
                     #(
-                        let value = serde_json::to_value(#args_without_types).expect("Fail to serialize argument to `Value`");
+                        let value = lemotests::serde_json::to_value(#args_without_types).expect("Fail to serialize argument to `Value`");
                         json_args.insert(stringify!(#args_without_types).into(), value);
                     )*
                     let tx = lemotests::TxWrapper::new(account, contract, #contract_function_name.to_owned(), json_args, lemotests::TxKind::AccountCallContract, self);
@@ -106,9 +139,9 @@ fn compose_method_for_accounts_tt(blueprint: FunctionBlueprint) -> (TokenStream,
                     return Err(lemotests::HelperError::ContractNotFound(format!("{}", #contract_name)));
                 };
 
-                let mut json_args = serde_json::Map::new();
+                let mut json_args = lemotests::serde_json::Map::new();
                 #(
-                    let value = serde_json::to_value(#args_without_types).expect("Fail to serialize argument to `Value`");
+                    let value = lemotests::serde_json::to_value(#args_without_types).expect("Fail to serialize argument to `Value`");
                     json_args.insert(stringify!(#args_without_types).into(), value);
                 )*
                 let tx = lemotests::TxWrapper::new(None, contract, #contract_function_name.to_owned(), json_args, lemotests::TxKind::View, self);
@@ -123,15 +156,16 @@ fn compose_method_for_accounts_tt(blueprint: FunctionBlueprint) -> (TokenStream,
                     return Err(lemotests::HelperError::ContractNotFound(format!("{}", #contract_name)));
                 };
 
-                let mut json_args = serde_json::Map::new();
+                let mut json_args = lemotests::serde_json::Map::new();
                 #(
-                    let value = serde_json::to_value(#args_without_types).expect("Fail to serialize argument to `Value`");
+                    let value = lemotests::serde_json::to_value(#args_without_types).expect("Fail to serialize argument to `Value`");
                     json_args.insert(stringify!(#args_without_types).into(), value);
                 )*
                 let tx = lemotests::TxWrapper::new(None, contract, #contract_function_name.to_owned(), json_args, lemotests::TxKind::SelfContractCall, self);
                 Ok(tx)
             }
         },
+        TxKind::ViewAccount => unreachable!(),
     };
 
     implementation_tt.to_tokens(&mut implementations_tt);

@@ -17,6 +17,8 @@ pub enum HelperError {
     AccountAndContractNotFound(String),
     #[error("Failed to destructure array into variables: {0}")]
     DestructuringError(String),
+    #[error("ChainResultError was occured: {0}")]
+    ChainResultError(String),
 }
 
 impl Debug for HelperError {

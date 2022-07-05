@@ -10,6 +10,8 @@ pub enum MacrosError {
     DeserializeJsonSchemaError(#[from] serde_json::Error),
     #[error("Failed to parse. {0}")]
     FailedToParseError(#[from] syn::Error),
+    #[error("Failed to destructure `Punctuated`: {0}")]
+    DestructuringPunctuatedError(String),
 }
 
 impl Debug for MacrosError {
