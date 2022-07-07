@@ -1,6 +1,7 @@
 use std::fmt;
 use std::ops::Sub;
 
+#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 pub struct Near(pub u128);
 
 impl Sub<u128> for Near {
@@ -11,6 +12,31 @@ impl Sub<u128> for Near {
     }
 }
 
+impl PartialEq<Near> for u128 {
+    fn eq(&self, other: &Near) -> bool {
+        self.eq(&other.parse())
+    }
+}
+
+impl PartialEq<u128> for Near {
+    fn eq(&self, other: &u128) -> bool {
+        self.parse().eq(other)
+    }
+}
+
+impl PartialOrd<Near> for u128 {
+    fn partial_cmp(&self, other: &Near) -> Option<std::cmp::Ordering> {
+        self.partial_cmp(&other.parse())
+    }
+}
+
+impl PartialOrd<u128> for Near {
+    fn partial_cmp(&self, other: &u128) -> Option<std::cmp::Ordering> {
+        self.parse().partial_cmp(other)
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 pub struct Tgas(pub u64);
 
 pub trait Nearable {
