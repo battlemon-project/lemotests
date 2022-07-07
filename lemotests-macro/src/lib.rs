@@ -1,6 +1,4 @@
 #![feature(let_else)]
-extern crate core;
-
 mod blueprint;
 mod errors;
 mod handler;
