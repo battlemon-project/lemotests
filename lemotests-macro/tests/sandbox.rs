@@ -1,4 +1,4 @@
-use lemotests::{anyhow, Near, StateBuilder, Tgas, tokio};
+use lemotests::{anyhow, tokio, Near, StateBuilder, Tgas};
 use lemotests_macro::add_helpers;
 use serde_json::Value;
 
@@ -12,7 +12,7 @@ add_helpers!("./lemotests/nft_schema.json");
 
 #[tokio::test]
 async fn base_features_works() -> anyhow::Result<()> {
-    let blockchain = StateBuilder::testnet()
+    let bchain = StateBuilder::testnet()
         .with_contract("nft_token", NFT_PATH, Near(10))?
         .with_contract("market", MARKET_PATH, Near(20))?
         .with_alice(Near(20))?
@@ -20,7 +20,7 @@ async fn base_features_works() -> anyhow::Result<()> {
         .build()
         .await?;
 
-    let result = blockchain
+    bchain
         .alice_call_nft_token_init("alice")?
         .with_gas(Tgas(10))
         .then()
