@@ -56,6 +56,19 @@ impl<T> Index<usize> for ChainResult<T> {
     }
 }
 
+pub trait Contains {
+    fn contains_error(&self, substring: &str) -> bool;
+}
+
+impl<T> Contains for Result<ChainResult<T>, HelperError> {
+    fn contains_error(&self, substring: &str) -> bool {
+        match self {
+            Ok(_) => false,
+            Err(e) => format!("{:?}", e).contains(substring),
+        }
+    }
+}
+
 impl<T> fmt::Debug for ChainResult<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "tx_results: {:?}", self.tx_results)
