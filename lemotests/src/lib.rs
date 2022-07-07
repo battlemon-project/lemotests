@@ -1,7 +1,4 @@
-#![feature(map_try_insert)]
-
-extern crate core;
-
+mod chain_result;
 pub mod consts;
 mod errors;
 pub mod prelude;
@@ -10,11 +7,9 @@ mod state_builder;
 mod tx_details;
 mod tx_wrapper;
 mod units;
-mod chain_result;
 
-
-pub use chain_result::*;
 pub use anyhow;
+pub use chain_result::*;
 pub use consts::*;
 pub use errors::*;
 pub use serde_json;
