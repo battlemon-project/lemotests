@@ -34,9 +34,7 @@ where
     }
 
     pub fn add_tx_scenario(&mut self, tx: TxWrapper<T>) {
-        if let Some(t) = self.tx_scenarios.as_mut() {
-            t.push(tx)
-        }
+        self.tx_scenarios.get_or_insert(Vec::new()).push(tx);
     }
 
     pub fn take_tx_scenarios(&mut self) -> Vec<TxWrapper<T>> {
