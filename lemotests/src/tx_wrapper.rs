@@ -6,7 +6,7 @@ use anyhow::Context;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::fmt::Debug;
+use std::fmt::{Debug, Formatter};
 use workspaces::DevNetwork;
 
 #[derive(Debug, Copy, Clone)]
@@ -27,6 +27,12 @@ pub struct TxWrapper<T> {
     tx_kind: TxKind,
     state: Option<State<T>>,
     label: Option<Key>,
+}
+
+impl<T> Debug for TxWrapper<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "TxWrapper {{ account: {:?}, contract: {:?}, function: {:?}, arguments: {:?}, near: {:?}, gas: {:?}, tx_kind: {:?}, label: {:?} }}", self.account, self.contract, self.function, self.arguments, self.near, self.gas, self.tx_kind, self.label)
+    }
 }
 
 impl<T: DevNetwork> TxWrapper<T> {
@@ -124,6 +130,7 @@ async fn process_tx<T: DevNetwork>(
 ) -> Result<TxDetails, HelperError> {
     let account = tx.account().and_then(|a| state.account(a).ok());
     let contract = tx.contract().and_then(|c| state.contract(c).ok());
+    let tx_error = || format!("Failed to process transaction. Transaction details: {tx:?}");
 
     match tx.tx_kind {
         TxKind::ViewAccount => {
@@ -158,7 +165,7 @@ async fn process_tx<T: DevNetwork>(
                 .with_context(|| format!("Failed to parse JSON. Arguments {:?}", tx.arguments()))?
                 .transact()
                 .await
-                .context("Failed to process transaction.")?;
+                .with_context(tx_error)?;
 
             Ok(TxDetails::Call(Box::new(ret)))
         }
@@ -176,7 +183,7 @@ async fn process_tx<T: DevNetwork>(
                 .with_context(|| format!("Failed to parse JSON. Arguments {:?}", tx.arguments()))?
                 .view()
                 .await
-                .context("Failed to process transaction.")?;
+                .with_context(tx_error)?;
 
             Ok(TxDetails::View(ret))
         }
@@ -195,7 +202,7 @@ async fn process_tx<T: DevNetwork>(
                 .with_context(|| format!("Failed to parse JSON. Arguments {:?}", tx.arguments()))?
                 .transact()
                 .await
-                .context("Failed to process transaction.")?;
+                .with_context(tx_error)?;
 
             Ok(TxDetails::Call(Box::new(ret)))
         }
