@@ -1,8 +1,16 @@
 use std::fmt;
 use std::ops::Sub;
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Debug)]
 pub struct Near(pub u128);
+
+impl Sub<Near> for Near {
+    type Output = Near;
+
+    fn sub(self, other: Near) -> Self::Output {
+        Near(self.0.parse() - other.0.parse())
+    }
+}
 
 impl Sub<u128> for Near {
     type Output = u128;
@@ -36,7 +44,7 @@ impl PartialOrd<u128> for Near {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord, Debug)]
 pub struct Tgas(pub u64);
 
 pub trait Nearable {
@@ -73,12 +81,12 @@ impl Gasable for u64 {
 
 impl fmt::Display for Near {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.parse())
     }
 }
 
 impl fmt::Display for Tgas {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.0.parse())
     }
 }

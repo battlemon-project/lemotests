@@ -1,4 +1,5 @@
-// pub const ALMOST_ZERO: Balance = parse_near!("0.1 N");"
+use workspaces::types::Balance;
+pub const ALMOST_ZERO: Balance = 10_u128.pow(23); // 0.1 near
 // pub const ONE_NEAR: Balance = parse_near!("1 N");
 // pub const FOUR_NEAR: Balance = parse_near!("4 N");
 // pub const FIVE_NEAR: Balance = parse_near!("5 N");

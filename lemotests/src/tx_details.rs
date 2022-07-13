@@ -53,6 +53,15 @@ impl TxDetails {
             _ => unimplemented!("View result has no `is_success`"),
         }
     }
+
+    pub fn gas_used(&self) -> u64 {
+        // match self {
+        //     TxDetails::Call(details) => details.gas_used(),
+        //     _ => unimplemented!("View result has no gas used"),
+        // }
+
+        todo!()
+    }
 }
 
 impl Debug for TxDetails {

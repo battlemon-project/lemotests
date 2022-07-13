@@ -87,6 +87,9 @@ where
         Ok(ret)
     }
 
+    /// Returns ids for contracts and accounts.
+    /// The order starts from contract ids and then accounts ids.
+    /// The order of ids inside the group is the order of ids in your code.
     pub fn string_ids<const N: usize>(&self) -> Result<[String; N], HelperError> {
         self.contracts
             .values()
