@@ -119,4 +119,8 @@ where
     pub fn bob(&self) -> Result<&Account, HelperError> {
         self.account("bob")
     }
+
+    pub fn bob_id(&self) -> Result<String, HelperError> {
+        self.bob().map(|account| account.id().as_str().to_owned())
+    }
 }
