@@ -4,7 +4,6 @@ use lemotests::consts::ACCOUNTS;
 use lemotests::TxKind;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, ToTokens};
-use std::path::Path;
 use syn::parse::Parser;
 use syn::punctuated::Punctuated;
 use syn::{ExprLit, Lit, Token};
@@ -67,7 +66,7 @@ fn compose_helper_trait_tt(schemas: &[ContractSchema]) -> TokenStream {
            #all_declarations_tt
         }
 
-        impl<T> Helper<T> for lemotests::State<T>
+        impl<T: std::fmt::Debug> Helper<T> for lemotests::State<T>
         where
             T: lemotests::workspaces::DevNetwork,
         {

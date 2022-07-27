@@ -1,8 +1,6 @@
 use crate::TxDetails;
 use crate::{HelperError, State};
 use indexmap::IndexMap;
-use std::fmt;
-use std::fmt::Formatter;
 use std::ops::Index;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -11,6 +9,7 @@ pub(crate) enum Key {
     Index(usize),
 }
 
+#[derive(Debug)]
 pub struct ChainResult<T> {
     tx_results: IndexMap<Key, TxDetails>,
     state: Option<State<T>>,
@@ -66,11 +65,5 @@ impl<T> Contains for Result<ChainResult<T>, HelperError> {
             Ok(_) => false,
             Err(e) => format!("{:?}", e).contains(substring),
         }
-    }
-}
-
-impl<T> fmt::Debug for ChainResult<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "tx_results: {:?}", self.tx_results)
     }
 }

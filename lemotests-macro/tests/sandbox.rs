@@ -1,6 +1,5 @@
 use lemotests::{anyhow, tokio, Near, StateBuilder, Tgas};
 use lemotests_macro::add_helpers;
-use serde_json::Value;
 
 const NFT_PATH: &str =
     "../../battlemon_contracts/target/wasm32-unknown-unknown/release/nft_token.wasm";

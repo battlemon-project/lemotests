@@ -1,10 +1,10 @@
-use crate::{HelperError, TxDetails, TxKind, TxWrapper};
-use core::fmt;
-use std::fmt::Formatter;
-use workspaces::{Account, AccountId, Contract, DevNetwork, Worker};
+use crate::{HelperError, TxKind, TxWrapper};
+use std::fmt::Debug;
+use workspaces::{Account, Contract, DevNetwork, Worker};
 pub type Accounts = indexmap::IndexMap<String, Account>;
 pub type Contracts = indexmap::IndexMap<String, Contract>;
 
+#[derive(Debug)]
 pub struct State<T> {
     root: Account,
     worker: Worker<T>,
@@ -15,7 +15,7 @@ pub struct State<T> {
 
 impl<T> State<T>
 where
-    T: DevNetwork,
+    T: DevNetwork + Debug,
 {
     pub(crate) fn new(
         root: Account,
@@ -38,7 +38,7 @@ where
     }
 
     pub fn take_tx_scenarios(&mut self) -> Vec<TxWrapper<T>> {
-        self.tx_scenarios.take().unwrap_or_else(Vec::new)
+        self.tx_scenarios.take().unwrap_or_default()
     }
 
     pub fn worker(&self) -> &Worker<T> {

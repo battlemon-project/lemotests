@@ -1,8 +1,8 @@
-use crate::HelperError;
 use std::fmt::Debug;
 use workspaces::result::{CallExecutionDetails, ExecutionOutcome, ViewResultDetails};
 use workspaces::AccountDetails;
 
+#[derive(Debug)]
 pub enum TxDetails {
     Call(Box<CallExecutionDetails>),
     View(ViewResultDetails),
@@ -12,8 +12,8 @@ pub enum TxDetails {
 impl TxDetails {
     pub fn balance(&self) -> u128 {
         match self {
-            TxDetails::Call(details) => unimplemented!("balance method not available for `Call`"),
-            TxDetails::View(details) => unimplemented!("balance method not available for `View`"),
+            TxDetails::Call(_) => unimplemented!("balance method not available for `Call`"),
+            TxDetails::View(_) => unimplemented!("balance method not available for `View`"),
             TxDetails::ViewAccount(details) => details.balance,
         }
     }
@@ -22,7 +22,7 @@ impl TxDetails {
         match self {
             TxDetails::Call(details) => details.json(),
             TxDetails::View(details) => details.json(),
-            TxDetails::ViewAccount(details) => unimplemented!("json not available for ViewAccount"),
+            TxDetails::ViewAccount(_) => unimplemented!("json not available for ViewAccount"),
         }
     }
 
@@ -61,19 +61,5 @@ impl TxDetails {
         // }
 
         todo!()
-    }
-}
-
-impl Debug for TxDetails {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TxDetails::Call(details) => write!(f, "{:?}", details),
-            TxDetails::View(details) => write!(
-                f,
-                "TxDetails::View(ViewResultDetails {{logs {:?}, result: {:?} }})",
-                details.logs, details.result
-            ),
-            TxDetails::ViewAccount(details) => write!(f, "{:?}", details),
-        }
     }
 }

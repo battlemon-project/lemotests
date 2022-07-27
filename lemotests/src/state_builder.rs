@@ -1,6 +1,7 @@
 use crate::{HelperError, Nearable, State, ALICE, BOB, CHARLIE, DAVE, EDWARD, FRED};
 use anyhow::Context;
 use indexmap::IndexMap;
+use std::fmt::Debug;
 use std::future::Future;
 use std::path::PathBuf;
 use workspaces::network::{DevAccountDeployer, Sandbox, Testnet};
@@ -26,7 +27,7 @@ impl StateBuilder<()> {
 impl<F, T> StateBuilder<F>
 where
     F: Future<Output = anyhow::Result<Worker<T>>>,
-    T: DevNetwork,
+    T: DevNetwork + Debug,
 {
     pub fn new(worker_fut: fn() -> F) -> Self {
         Self {
@@ -149,7 +150,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Near, NFT, NFT_PATH};
+    use crate::Near;
+    use workspaces::testnet;
+    const NFT: &str = "nft";
+    const NFT_PATH: &str = "../../contract.wasm";
 
     #[test]
     fn builder_path_works() {
