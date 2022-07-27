@@ -4,7 +4,6 @@ use lemotests::consts::ACCOUNTS;
 use lemotests::TxKind;
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, ToTokens};
-use std::path::Path;
 use syn::parse::Parser;
 use syn::punctuated::Punctuated;
 use syn::{ExprLit, Lit, Token};

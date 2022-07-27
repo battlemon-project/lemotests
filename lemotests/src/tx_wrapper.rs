@@ -3,10 +3,9 @@ use crate::tx_details::TxDetails;
 use crate::Key;
 use crate::{Gasable, HelperError, Nearable, State};
 use anyhow::Context;
-use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::fmt::{Debug, Formatter};
+use std::fmt::Debug;
 use workspaces::DevNetwork;
 
 #[derive(Debug, Copy, Clone)]
@@ -17,6 +16,7 @@ pub enum TxKind {
     ViewAccount,
 }
 
+#[derive(Debug)]
 pub struct TxWrapper<T> {
     account: Option<String>,
     contract: Option<String>,
@@ -29,13 +29,7 @@ pub struct TxWrapper<T> {
     label: Option<Key>,
 }
 
-impl<T> Debug for TxWrapper<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "TxWrapper {{ account: {:?}, contract: {:?}, function: {:?}, arguments: {:?}, near: {:?}, gas: {:?}, tx_kind: {:?}, label: {:?} }}", self.account, self.contract, self.function, self.arguments, self.near, self.gas, self.tx_kind, self.label)
-    }
-}
-
-impl<T: DevNetwork> TxWrapper<T> {
+impl<T: DevNetwork + Debug> TxWrapper<T> {
     pub fn new(
         account: Option<String>,
         contract: Option<String>,
@@ -124,7 +118,7 @@ impl<T: DevNetwork> TxWrapper<T> {
     }
 }
 
-async fn process_tx<T: DevNetwork>(
+async fn process_tx<T: DevNetwork + Debug>(
     tx: &TxWrapper<T>,
     state: &State<T>,
 ) -> Result<TxDetails, HelperError> {
