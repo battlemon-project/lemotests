@@ -53,7 +53,7 @@ use schema::*;
 /// use lemotests::prelude::*;
 ///
 /// let bchain = StateBuilder::testnet()
-///                    .with_contract("contract_name", "path/to/contract",Near(10))?
+///                    .with_contract("contract_name", "path/to/contract", Near(10))?
 ///                    .with_alice(Near(10))?
 ///                    .build()
 ///                    .await?;
