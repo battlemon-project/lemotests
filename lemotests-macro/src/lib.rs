@@ -1,4 +1,3 @@
-#![feature(let_else)]
 mod blueprint;
 mod errors;
 mod handler;
